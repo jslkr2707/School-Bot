@@ -36,4 +36,4 @@ async def info(ctx):
     else:
         await ctx.reply('등록되지 않은 사용자입니다!')
         
-bot.run("MTA1NzU3MjQ2MDI1MTMzNjcxNQ.GLCDd3.zW0DfOE0qjdI9K7pc8_SYGmqf4Tm6BBHvnrM0M")
+bot.run("asdf") #token reset, don't even try
