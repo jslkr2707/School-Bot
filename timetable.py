@@ -1,16 +1,32 @@
 import requests
 import json
-import rawJson
+import pandas as pd
+import datetime
+import numpy as np
+import dataframe_image as dfi
+
+def toDate(num):
+    return num.isoformat().replace("-", "")
 
 key = "8ac24597df1b4f379534042401554d00"
+start = datetime.date.today() - datetime.timedelta(days = datetime.date.today().weekday())
+end = start + datetime.timedelta(days=4)
 
-def subjects(date):
-    subjects = '오늘 수업 과목은'.split()
-    for i in rawJson.raw('hisTimetable', key, {'AY': 2022, 'SEM': 2, 'ALL_TI_YMD': date, 'GRADE': 1, 'CLASS_NM': 8}):
-        subjects.append("**" + i['ITRT_CNTNT'] + "**")
+def getMonday():
+    return start.isoformat()
 
-    for j in range(3, len(subjects) - 1):
-        subjects[j] += ', '
-    subjects.extend('입니다.\n 수업을 잘 듣나 돌아다니며 감시를 할 예정이므로, 잘 들으면 좋겠습니다.'.split())
-    return subjects
+def timetable(grade, class_no):
+    url = f"https://open.neis.go.kr/hub/hisTimetable?KEY={key}&Type=json&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=7010137&GRADE={grade}&CLASS_NM={class_no}&AY=2022&TI_FROM_YMD={toDate(start)}&TI_TO_YMD={toDate(end)}"
 
+    try:
+        row = np.array(json.loads(requests.get(url).text)['hisTimetable'][1]['row'])
+    except:
+        return '없습니다'
+    days = np.array([i for i in range(len(row)) if row[i]['PERIO'] == '1'] + [len(row)])
+    subjects = [[i['ITRT_CNTNT'] for i in row[days[j]:days[j+1]]] for j in range(len(days)-1)]
+    for i in subjects: 
+        if len(i) < 7: i.append('X')
+    weekdays = ['월', '화', '수', '목', '금']
+    timetable = pd.DataFrame(dict([(k, v) for k, v in zip(weekdays, subjects)])); timetable.index += 1
+
+    dfi.export(timetable, f'image/{start.isoformat()}.png', max_cols=-1, max_rows=-1)
